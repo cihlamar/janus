@@ -3,7 +3,7 @@
   ansible.builtin.pip:
     name: "ansible-core=={{ sanity_target.ansible_core_version }}"
     state: present
-    virtualenv: "{{ partner_certification_venv }}"
+    executable: "{{ partner_certification_venv }}/bin/pip"
     extra_args: --upgrade
 
 - name: Execute ansible-test sanity in Docker {{ sanity_target.ansible_core_version }}
@@ -17,7 +17,7 @@
       - --color
       - --verbose
   args:
-    chdir: "{{ partner_certification_collection_root }}"
+    chdir: "{{ _partner_cert_sanity_collection_root }}"
   environment:
     ANSIBLE_TEST_ALLOW_ROOT: "1"
   register: _partner_cert_sanity

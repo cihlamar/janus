@@ -64,7 +64,7 @@
       - "galaxy-importer=={{ partner_certification_galaxy_importer_version }}"
       - "ansible-lint=={{ partner_certification_ansible_lint_version }}"
     state: present
-    virtualenv: "{{ partner_certification_venv }}"
+    executable: "{{ partner_certification_venv }}/bin/pip"
     extra_args: --upgrade
 
 - name: Run galaxy-importer build and import check
@@ -172,6 +172,27 @@
     ANSIBLE_COLLECTIONS_PATH: "{{ partner_certification_ansible_collections_path }}"
   register: _partner_cert_ansible_lint
   changed_when: false
+
+- name: Read downstream galaxy.yml for namespace and name
+  ansible.builtin.slurp:
+    src: "{{ partner_certification_collection_root }}/galaxy.yml"
+  register: _partner_cert_galaxy_yml
+
+- name: Set ansible-test collection path
+  ansible.builtin.set_fact:
+    _partner_cert_sanity_collection_root: >-
+      {{ partner_certification_output_dir }}/ansible_test_tree/ansible_collections/{{ (_partner_cert_galaxy_yml.content | b64decode | from_yaml).namespace }}/{{ (_partner_cert_galaxy_yml.content | b64decode | from_yaml).name }}
+
+- name: Create ansible_collections directory structure for ansible-test
+  ansible.builtin.file:
+    path: "{{ _partner_cert_sanity_collection_root | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy downstream collection into ansible_collections tree for ansible-test
+  ansible.builtin.command:
+    cmd: "rsync -a --delete {{ partner_certification_collection_root }}/ {{ _partner_cert_sanity_collection_root }}/"
+    creates: "{{ _partner_cert_sanity_collection_root }}/galaxy.yml"
 
 - name: Run ansible-test sanity checks {{ sanity_target.ansible_core_version }}
   ansible.builtin.include_tasks: run_partner_certification_sanity.yml
