@@ -57,7 +57,7 @@
       - pip
   changed_when: false
 
-- name: Install partner certification tooling (galaxy-importer and ansible-lint)
+- name: Install partner certification tooling (galaxy-importer and ansible-lint) [FIXED]
   ansible.builtin.pip:
     name:
       - "ansible-core=={{ partner_certification_ansible_core_version }}"
